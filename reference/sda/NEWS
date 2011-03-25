@@ -1,0 +1,57 @@
+
+               RELEASE HISTORY OF THE "sda" PACKAGE
+             ========================================
+
+              CHANGES IN `sda' PACKAGE VERSION 1.1.0 
+
+- new sda.ranking() function
+- plot function for "sda.ranking" objects 
+- additional to FDR values computation of higher-criticism scores
+- reference to Ahdesm\"aki and Strimmer (2009) paper added
+- Singh et al. (2002) example data added
+- improved help pages and examples
+- the data khan.x is now on log-scale
+
+
+              CHANGES IN `sda' PACKAGE VERSION 1.0.3 
+
+- sda() now provides ranking of features.
+- fdr values can optionally be computed for each feature.
+- centroids() now reports number of samples and features.
+- sda() function has been rewritten, and a bug introduced in 
+  version 1.0.2 has been corrected.
+
+
+              CHANGES IN `sda' PACKAGE VERSION 1.0.2 
+
+- predict.sda() is now very much faster, and the object returned
+  by sda() needs much less memory.  
+- the centroids() function now additionally computes the pooled mean and 
+  arbitrary powers of the correlation matrix (not just alpha=-1).
+- the microarray data from Khan et al. 2001 are now used as example.
+- bug fix: for shrinkage DDA the inverse correlation matrix is not
+  computed unnecessarily any more.
+
+
+              CHANGES IN `sda' PACKAGE VERSION 1.0.1 
+
+- new centroids() function to compute group-wise centroids,
+  (pooled variances), and inverse pooled correlations. 
+- uses the "collapse" option in corpcor >= 1.4.8 to save
+  memory when estimated correlation is diagonal (effectively
+  turning LDA into DDA if the estimated shrinkage intensity lambda=1).
+
+
+              CHANGES IN `sda' PACKAGE VERSION 1.0.0
+
+
+This package implements LDA and DDA classification,
+where the training of the classifier is done via Stein-type
+shrinkage of frequencies, variances, and correlation.
+
+This approach is particularly suitable for high-dimensional 
+classification.
+
+
+This is the first public release (27 October 2008).
+

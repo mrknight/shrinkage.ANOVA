@@ -1,0 +1,73 @@
+
+                 RELEASE HISTORY OF THE "st" PACKAGE
+               =======================================
+
+
+		CHANGES IN `st' PACKAGE VERSION 1.1.4
+
+- added option "group.method".  Now groups are determined either
+  by the correlation neighborhood (possibly overlapping groups) or 
+  by the clusters on the correlation graph (disjoint groups). 
+
+		CHANGES IN `st' PACKAGE VERSION 1.1.3
+
+- added option "group.thresh" to allow the specification of 
+  correlation neighborhoods around features and the computation
+  of the grouped cat score.
+
+		CHANGES IN `st' PACKAGE VERSION 1.1.2
+
+- correlation-shared t-statistic of Tibshirani and Wasserman 
+  (2006) added: new functions cst.stat() and cst.fun().
+- correlation-predicted t-statistic of Lai (2008) added:
+  new functions lait.stat(), lait.fun() and lai.tscore().
+
+		CHANGES IN `st' PACKAGE VERSION 1.1.1
+
+- rankprod.stat() and rankprod.fun() added for calculation of the
+  two-sided rank products statistic.
+- reference to Zuber and Strimmer (2009) added.
+- small corrections in the help pages, to pass the more stringent
+  checks on .Rd files introduced in R in January 2009.
+
+
+		CHANGES IN `st' PACKAGE VERSION 1.1.0
+
+- new functions shrinkcat.stat() und shrinkcat.fun() implementing
+  a shrinkage estimate of the "correlation-adjusted t-score" described
+  in Zuber and Strimmer (2009).
+- part of the code was rewritten to share code with the "sda" package 
+  (exploiting the link between discriminant analysis and gene ranking). 
+
+
+		CHANGES IN `st' PACKAGE VERSION 1.0.3
+
+- the class labels can now be specified as arbitrary factors,
+  the argument L is not any more restricted to be a vector containing
+  only 1s and  2s.
+
+
+		CHANGES IN `st' PACKAGE VERSION 1.0.2
+
+- some corrections and extensions have been made in the documentation,
+  in particular, how to compute q-values and local FDR values
+- shrinkt() now returns a proper vector (one for which is.vector() is TRUE).
+- the license was changed from "GNU GPL 2 or later" to "GNU GPL 3 or later".
+
+
+		CHANGES IN `st' PACKAGE VERSION 1.0.1
+
+- reference to Opgen-Rhein and Strimmer (2007) updated.
+- updated email address
+- updated minimum R versions and version of corpcor package
+
+
+		CHANGES IN `st' PACKAGE VERSION 1.0.0
+
+
+This is the first standalone release (31 August 2006).
+
+This package implements the "shrinkage t" statistic described
+in Opgen-Rhein and Strimmer (2007).  It also offers a convenient
+interface to a number of other regularized t-type statistics often
+used in high-dimensional case-control studies.    
