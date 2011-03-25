@@ -60,15 +60,6 @@ shrink.var	<- function(x) {
 	sv 		= lambda * v_target + (1 - lambda) * v_k	
 }
 
-# \brief	generate data for testing the lambda
-#			normal dist. with mean = 0 and selectable variance (default var = 1)
-#			l as dumb variable
-generate_data	<- function(l, var = 1) {
-	x	= rnorm(N, mean = 0, sd = sqrt(var))
-	return(x)
-}
-
-
 # \brief	compute t statistic as function of lambda
 # \param
 #

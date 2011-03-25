@@ -4,9 +4,7 @@
 #
 #################################
 
-source("/Users/knight/dev/src/shrinkage/lib.shrinkvar.R")
-
-# \brief	evalutate the statistic
+# \brief	evalutate the F statistic
 eval.statistic <- function(X, K, option) {
 	P	= ncol(X) # number of genes
 	N	= nrow(X) / K # number of samples
@@ -43,25 +41,10 @@ eval.statistic <- function(X, K, option) {
 		
 	}
 	
+	
 	f.all = sapply(1:P, compute.f.all, X)
+	return (f.all)
 }
-
-# testing 1
-f = eval.statistic(X, K, option = "")
-f = sort(f)
-z 		= (1:P)/P
-plot(f, z, type = "l")
-lines(f, pf( f, df1 = (K - 1), df2 = (N*K - K) ), col=3, lwd = 2)
-
-
-# testing 2
-#num 	= 500
-#x 		= sapply(1:num, eval.statistic)
-#xx 		= sort(as.vector(x))
-
-#z 		= (1:num)/num
-#plot(xx, z, type = "l")
-#lines(xx, pf( xx, df1 = (K - 1), df2 = (N*K - K) ), col=3, lwd = 2)
 
 eval_data <- function(data, K, option) {
 
@@ -225,22 +208,3 @@ eval_data <- function(data, K, option) {
 	splot_lambda_dof(data_pos)
 
 }
-
-simu_option1 = c("I", "II", "III-p001", "IV-p001")
-simu_option2 = c("III-p002", "III-p005", "III-p01", "III-p02", "III-p05")
-simu_option3 = c("IV-p002", "IV-p005", "IV-p01", "IV-p02", "IV-p05")
-
-# start simulation
-#source("/Users/knight/dev/src/shrinkage_var/simu_shrinkage_t.R")
-#data_dir = "/Users/knight/dev/data/shrinkage_var/"
-
-#load_and_eval <- function(simu_name) {
-	# loading data
-#	load(paste(data_dir,"simu",simu_name,".rdata",sep=""))
-
-#	eval_data(xd, simu_name)
-#}
-
-#sapply(simu_option1, load_and_eval)
-#sapply(simu_option2, load_and_eval)
-#sapply(simu_option3, load_and_eval)

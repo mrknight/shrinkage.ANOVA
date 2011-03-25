@@ -8,41 +8,56 @@
 num		= 500 # number of simulation
 P		= 2000 # number of genes
 N		= 3 # sample size
-K_		= c(3, 5, 7) # number of groups
+K_		= c(2, 3, 5, 7) # number of groups
 
-# dir
-dir.data = "/Users/knight/dev/data/shrinkage/"
-dir.output = "/Users/knight/dev/output/shrinkage/"
+# source dir
+dir.data 	= "/Users/knight/dev/data/shrinkage.ANOVA"
+dir.output 	= "/Users/knight/dev/output/shrinkage.ANOVA"
+dir.source	= "/Users/knight/dev/src/shrinkage.ANOVA"
 
-require("geoR")
+# loading my library
+source(paste(dir.source, "/lib.evaluate.R"		, sep =""))
+source(paste(dir.source, "/lib.shrinkvar.R"		, sep =""))
+
+#require("geoR")
 # generating
 # the variance follows a scale-inverse-chi-square distr. scale-inv(d_0, s_0^2) with s_0^2 = 4 and d_0 = 4 (according to Strimmer's)
-d_0		= 4
-s_0		= 2
-tau		= sqrt( rinvchisq(1, df = d_0, scale = s_0) )
-
+#d_0		= 4; s_0		= 2
+#tau		= sqrt( rinvchisq(1, df = d_0, scale = s_0) )
 # the mean
-nu		= runif(1, min = -10, max = 10)
-										
-# \brief	generate data for the I. simulation (option I)
-#			same mean, same variance
-#			dumb variable l, p
-generate_data_I	<- function(l, tau, K) {
-	x	= rnorm(N*K, mean = nu, sd = tau)
-	return(x)
-}
+#nu		= runif(1, min = -10, max = 10)
 
-# TODO
-# \brief	generate data for the II. simulation (option II)
+tau 		= 10
+nu			= 0
+
+# \brief	generate data from a normal dist with a given p
+#			p was given as the number of outliers
 #			same mean, same variance
-#			with p% outliers, variance of outliers = variance^2
 #			dumb variable l
-generate_data_II <- function(l, p) {
+generate_data	<- function(l, p) {
 	if (runif(1, 0, 1) < p) {
 		x	= rnorm(N, mean = nu, sd = tau^2)
 	} else {
 		x	= rnorm(N, mean = nu, sd = tau)
 	}
+	return(x)
+}
+										
+# \brief	generate data for the I. simulation (option I) without outliers
+#			same mean, same variance
+#			dumb variable l
+generate_data_I	<- function(l, K) {
+#	x	= rnorm(N*K, mean = nu, sd = tau)
+	x	= sapply(1:K, generate_data, p = 0)
+	return(x)
+}
+
+# \brief	generate data for the II. simulation (option II) with outlier
+#			same mean, same variance
+#			with p% outliers, variance of outliers = variance^2
+#			dumb variable l
+generate_data_II <- function(l, K, p) {
+	x	= sapply(1:K, generate_data, p)
 	return(x)
 }
 
@@ -61,11 +76,5 @@ simu <- function() {
 	save(xd, file = "A.simuII.rdata")
 
 }
-
-K	= K_[2]
-# generate samples
-X 	= sapply(1:P, generate_data_I, tau, K)
-return (X)
-
 
 #XD = sapply(1:1, test)
