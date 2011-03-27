@@ -4,207 +4,188 @@
 #
 #################################
 
+# \brief	convert 1 column of X (data of 1 gene) to NxK matrix 
+convert.col2matrix 	<- function(x.col, K) {
+	return (matrix(x.col, nrow = N, ncol = K))
+}
+
+# compute the mean for each genes, each groups
+compute.mean.all <- function(pos, X, K) {
+	x.col	= X[,pos]
+	X.col 	= convert.col2matrix(x.col, K)
+	moments = compute.moments(X.col)
+	return(moments$mean)
+}
+
+# compute the var for each genes, each groups	
+compute.var.all <- function(pos, X, K) {
+	x.col	= X[,pos]
+	X.col 	= convert.col2matrix(x.col, K)
+	moments = compute.moments(X.col)
+	return(moments$var)
+}
+
 # \brief	evalutate the F statistic
 eval.statistic <- function(X, K, option) {
 	P	= ncol(X) # number of genes
 	N	= nrow(X) / K # number of samples
 	
-	# convert 1 column of X (data of 1 gene) to NxK matrix 
-	convert.col2matrix 	<- function(x.col) {
-		return (matrix(x.col, nrow = N, ncol = K))
-	}
-
-	compute.f <- function(X = X.col) {
+	# \brief	compute ordinary F statistic
+	compute.F <- function(X = X.col) {
 		moments = compute.moments(X)
 		mu_		= moments$mean
 		var_	= moments$var
-	
+
 		grand_mean	= sum(X) / (K*N)
 		SST			= N*sum( (mu_ - grand_mean)^2 )
 		MST			= SST / (K - 1)
 		SSE			= (N - 1)*sum(var_)
 		MSE			= SSE / (N*K - K)
-	
+
 		# F-statistic
 		F 		= MST / MSE
 		return (F)
 	}
-	
-	compute.f.all <- function(pos, X) {
+	compute.F.all <- function(pos, X) {
 		x.col	= X[,pos]
 		X.col 	= convert.col2matrix(x.col)
-		f		= compute.f(X.col)
-		return(f)
+		F		= compute.F(X.col)
+		return(F)
 	}
 	
 	compute.shrinkage.f <- function() {
 		
 	}
 	
-	
-	f.all = sapply(1:P, compute.f.all, X)
+	f.all = sapply(1:P, compute.F.all, X)
 	return (f.all)
 }
 
-eval_data <- function(data, K, option) {
+# \brief	evalutate the F statistic
+compute.F.score <- function(mean.all, var.all, K) {
+	grandmean.all	= colSums(mean.all) / K
+	
+	SST			= N*colSums( t(t(mean.all) - grandmean.all)^2 )
+	MST			= SST / (K - 1)
+	SSE			= (N - 1)*colSums(var.all)
+	MSE			= SSE / (N*K - K)
 
-	find_minmax <- function(data_pos) {
-		c_max = c()
-		c_min = c()
-		for (i in 1:(length(data_pos))) {
-			max = max(as.vector(data[data_pos[i],],"numeric"))
-			min = min(as.vector(data[data_pos[i],],"numeric"))
-			c_max = c(c_max, max)
-			c_min = c(c_min, min)
-		}
-		x_max = max(c_max)
-		x_min = min(c_min)
-		return (list(x_max=x_max, x_min=x_min))
+	# F-statistic
+	F 		= MST / MSE	
+	return (F)
+}
+
+# \brief	compute all the variations of scores and the corresponded F statistic
+#			generate and evaluate data on the fly
+eval.F.statistic <- function(l, K, p) {
+	# header definition
+	lambda.all	= rep(0, K)
+	sv.all		= matrix(NA, nrow = K, ncol = P) 
+	
+	# without centering
+	center 	= FALSE
+	
+	sigma 		= tau
+	
+	# generate the simulated data
+	X 	= sapply(1:P, generate_data_II, K, p)
+
+	mean.all 	= sapply(1:P, compute.mean.all, X, K)
+	var.all		= sapply(1:P, compute.var.all, X, K)
+	grandmean.all	= colSums(mean.all) / K
+
+	# 1.case (the same with Strimmer's if the variances in each group are different)
+	target.all	= apply(var.all, 1, median)
+	
+	for (i in 1:K) {
+		lambda.all[i]	= compute.lambda(X[(1+N*(i-1)):(N*i),], mean.all[i,], var.all[i,], target.all[i])
+		sv.all[i,] 		= compute.shrink.var(lambda.all[i], target.all[i], var.all[i,])
 	}
-
-	cols = rainbow(3*2)
 	
-	png(filename=paste("hist_score",option,".png",sep=""), width=2000, height=1000, pointsize=12)
-	#par(mfrow=c(2,2))
-	# compare the score
-	plot_score <- function(data_pos) {
-		x_max = find_minmax(data_pos)$x_max
-		x_min = find_minmax(data_pos)$x_min
-		plot(NULL, NULL, xlim=c(x_min,x_max), ylim=c(0,1), main = paste("Option ",option,sep=""), xlab = "score", ylab = "Density")
-		lg = c()
-		for (i in 1:(length(data_pos))) {
-			# calc which variant from the position of data in list
-			variant 	= (data_pos[i] %/% 5) + 1
-			h 			= hist(as.vector(data[data_pos[i],],"numeric"), breaks = 100, plot = FALSE )
-			h$density 	= h$counts/sum(h$counts)
-			h$counts    = cumsum(h$counts)
-			h$density   = cumsum(h$density)
-
-			lines(h$mid, h$density, col=cols[i], lwd = 2)
-			lg = c(lg, paste(variant ,". variant"))
-		}
-
-		legend(x="bottomright",inset=0.01,legend=lg,col=cols,lwd=3)
-	}
-	data_pos = c(1, 6, 16)
-	plot_score(data_pos)
+	lambda1		= lambda.all
 	
-	png(filename=paste("hist_scoret",option,".png",sep=""), width=2000, height=1000, pointsize=12)
-	# compare the score~
-	data_pos = c(2, 7, 12, 17, 22)
-	plot_score(data_pos)
-	
-	png(filename=paste("plot_a_b",option,".png",sep=""), width=1500, height=2500, pointsize=12)
-	par(mfrow=c(5,3))
-	# compare the expected value and variance of t-statistic
-	dof = rep(1, 5)	
-	lambda	= seq(0.01, .99, length=99)
-	
-	plot_ab <- function(data_pos) {
-		# calc which variant from the position of data in list
-		variant = (data_pos %/% 5) + 1
+	u.all 		= colMeans(sv.all)
 		
-		# compute the mean of all a and b from all simulation
-		a	= apply(do.call("cbind", data[data_pos,]), 1, mean)
-		b	= apply(do.call("cbind", data[(data_pos+1),]), 1, mean)
-	  	a[a < .Machine$double.eps] = 0
-		# compute the defree of freedom from b
-		dof[variant] = (mean(b)*2) / (mean(b) - 1)
+	score_1	 	= sum((sv.all - sigma^2)^2)
+	scoret_1 	= sum((u.all - sigma^2)^2)
+	F.all_1 	= compute.F.score(mean.all, sv.all, K)
+	
+	# 2.case
+	target		= median(var.all)
+	for (i in 1:K) {
+		lambda.all[i]	= compute.lambda(X[(1+N*(i-1)):(N*i),], mean.all[i,], var.all[i,], target)
+		sv.all[i,] 		= compute.shrink.var(lambda.all[i], target, var.all[i,])
+	}
+	
+	lambda2		= lambda.all
 
-		plot(lambda, a, type="l", lwd = 1, main = paste("Option ", option ,", ", variant ,". variant",sep=""), ylab = "Expected Value", xlab = "lambda")
-		lines(lambda, rep(0, 99), col=4, lwd = 1)
-		plot(lambda, b, type="l", lwd = 1, main = paste("Option ", option ,", ", variant ,". variant",sep=""), ylab = "Variance", xlab = "lambda")
-		#lines(lambda, 2*b/(b-1), col=4, lwd = 1)
-		plot(lambda,  2*b/(b-1), type="l", lwd = 1, main = paste("Option ", option ,", ", variant ,". variant",sep=""), ylab = "Degree of freedom", xlab = "lambda")
+	u.all 		= colMeans(sv.all)
 		
-		return(dof)
-	}
-	data_pos = c(4, 9, 14, 19, 24)
-	dof = diag(sapply(data_pos, plot_ab))
-
-	png(filename=paste("plot_tstat",option,".png",sep=""), width=1000, height=2500, pointsize=12)
-	par(mfrow=c(5,2))
-	# compare the t-statistic
-
-	# defree of freedom, assumed
-	#df 	= L + L - 2
-	yy	= (1:(num*N))/(num*N)
-	
-	plot_tstat <- function(data_pos) {
-		variant = (data_pos %/% 5) + 1	
-		# turn list of t-statistic to matrix
-		xts	= do.call("cbind", data[data_pos,])
-		xx  = sort(as.vector(xts)) # for all genes, or xts[1,] for just the 1.gene	
-		plot(xx, yy, type="l", lwd = 1, main = paste("Option ", option ,", ", variant ,". variant",sep=""), xlab = "");
-		# variance of all t
-		var_t = var(xx)
-		df = 2*var_t/(var_t - 1)
-		lines(xx, pt(xx, df), col=4, lwd=1)
-		lines(xx, pt(xx, dof[variant]), col=2, lwd=1)
-		plot(xx, yy-pt(xx, df), type="l", col=4, lwd=1, main = paste("Option ", option ,", ", variant ,". variant",sep=""), xlab = "");
-		lines(xx, yy-pt(xx, dof[variant]), col=2, lwd=1)		
-	}
-	data_pos = c(3, 8, 13, 18, 23)
-	sapply(data_pos, plot_tstat)
+	score_2	 	= sum((sv.all - sigma^2)^2)
+	scoret_2 	= sum((u.all - sigma^2)^2)
+	F.all_2 	= compute.F.score(mean.all, sv.all, K)
 		
-	png(filename=paste("hist_lambda",option,".png",sep=""), width=2000, height=1000, pointsize=12)
-	# histogram for compare the lambda
-	find_minmax_lambda <- function(data_pos) {
-		c_max = c()
-		c_min = c()
-		for (i in 1:(length(data_pos))) {
-			max = max(do.call("c", data[data_pos[i],]))
-			min = min(do.call("c", data[data_pos[i],]))
-			c_max = c(c_max, max)
-			c_min = c(c_min, min)
-		}
-		x_max = max(c_max)
-		x_min = min(c_min)
-		return (list(x_max=x_max, x_min=x_min))
-	}
-	plot_lambda <- function(data_pos) {
-		x_max = find_minmax_lambda(data_pos)$x_max
-		x_min = find_minmax_lambda(data_pos)$x_min
-		plot(NULL, NULL, xlim=c(x_min,x_max), ylim=c(0,1), main = paste("Option ",option,sep=""), xlab = "score", ylab = "Density")
-		lg = c()
-		for (i in 1:(length(data_pos))) {
-			# calc which variant from the position of data in list
-			variant = data_pos[i] - 25
-			h 			= hist(do.call("c", data[data_pos[i],]), breaks = 100, plot = FALSE )
-			h$density 	= h$counts/sum(h$counts)
-			h$counts    = cumsum(h$counts)
-			h$density   = cumsum(h$density)
+	# 3.case
+	u.all		= colMeans(var.all)
+	u.median	= median(u.all)
+	
+	# combined moments of all groups
+	# treat all groups like one group
+	X.m			= compute.moments(X)
 
-			lines(h$mid, h$density, col=cols[i], lwd = 2)
-			lg = c(lg, paste(variant ,". variant"))
-		}
+	lambda3		= compute.lambda(X, X.m$mean, X.m$var, u.median)
 
-		legend(x="bottomright",inset=0.01,legend=lg,col=cols,lwd=3)
+	# compute the shrinkage variance
+	u.sv		= compute.shrink.var(lambda3, u.median, X.m$var)
+	
+	score_3	 	= NA
+	scoret_3 	= sum((u.sv - sigma^2)^2)
+	U.sv		= matrix(rep(u.sv, K), ncol = P, nrow = K, byrow = T)
+	F.all_3  	= compute.F.score(mean.all, U.sv, K)
+	
+	#param = list(x_k=x_k, y_k=y_k, v_k=u_k, w_k=NA, v_target=u_median, w_target=NA)
+	#tt = sapply(lambda, compute_t, param)
+	#a3 = as.vector(tt[1,],"numeric")
+	#b3 = as.vector(tt[2,],"numeric")
+	
+	# 4.case
+	u.all		= colMeans(var.all)
+	u.median	= median(u.all)
+	
+	for (i in 1:K) {
+		lambda.all[i]	= compute.lambda(X[(1+N*(i-1)):(N*i),], mean.all[i,], var.all[i,], u.median)
+		sv.all[i,] 		= compute.shrink.var(lambda.all[i], u.median, var.all[i,])
 	}
 	
-	data_pos = c(26, 27, 28, 29, 30)
-	plot_lambda(data_pos)
+	lambda4		= lambda.all
+	u.all 		= colMeans(sv.all)
+		
+	score_4	 	= sum((sv.all - sigma^2)^2)
+	scoret_4 	= sum((u.all - sigma^2)^2)
+	F.all_4 	= compute.F.score(mean.all, sv.all, K)
 	
-	png(filename=paste("splot_lambda_dof",option,".png",sep=""), width=1000, height=1500, pointsize=12)
-	par(mfrow=c(3,2))
-	# scatterplot lambda versus dof	
-	splot_lambda_dof <- function(data_pos) {
-		for (i in 1:(length(data_pos))) {
-			# calc which variant from the position of data in list
-			variant = data_pos[i] - 25
-			# calc the position of the corresponded t-statistic
-			pos_t = variant * 5 - 2
-			lambda = do.call("c", data[data_pos[i],])
-			# calc the degree of freedom from var
-			dof = sapply(data[pos_t,], var)
-			dof = 2 * dof / (dof - 1)
-			if (length(dof) < length(lambda)) {
-				dof = rep(dof, each = 2)
-			}
-			plot(lambda, dof, main = paste("Option ", option ,", ", variant ,". variant",sep=""), xlab = "lambda", ylab = "Dof")
-		}
-	}
-#	data_pos = c(26, 27, 28, 29, 30)
-	splot_lambda_dof(data_pos)
+	# 5.case (aslike from Strimmer,  but without centering), only for data with the same variance
 
+	z.median	= median(X.m$var)
+	lambda5 	= compute.lambda(X, X.m$mean, X.m$var, z.median)
+	
+	# compute the shrinkage variance
+	z.sv		= compute.shrink.var(lambda5, z.median, X.m$var)
+	
+	score_5	 	= NA
+	scoret_5 	= sum((z.sv - sigma^2)^2)
+	Z.sv		= matrix(rep(z.sv, K), ncol = P, nrow = K, byrow = T)
+	F.all_5  	= compute.F.score(mean.all, Z.sv, K)
+
+	# dumb variable 
+	# TODO: add a and b
+	a1 = a2 = a3 = a4 = a5 = 0
+	b1 = b2 = b3 = b4 = b5 = 0
+	
+	return( list(score_1 = score_1, scoret_1 = scoret_1, F_1 = F.all_1, a1 = a1, b1 = b1,
+ 				 score_2 = score_2, scoret_2 = scoret_2, F_2 = F.all_2, a2 = a2, b2 = b2,
+				 score_3 = score_3, scoret_3 = scoret_3, F_3 = F.all_3, a3 = a3, b3 = b3,
+				 score_4 = score_4, scoret_4 = scoret_4, F_4 = F.all_4, a4 = a4, b4 = b4,
+				 score_5 = score_5, scoret_5 = scoret_5, F_5 = F.all_5, a5 = a5, b5 = b5,
+				 lambda1 = lambda1, lambda2 = lambda2, lambda3 = lambda3, lambda4 = lambda4, lambda5 = lambda5) )
 }

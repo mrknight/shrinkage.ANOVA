@@ -6,13 +6,15 @@
 
 source("/Users/knight/dev/src/shrinkage.ANOVA/lib.generate.R")
 
+m = matrix(1:15, 5, 3)
+mm = c(1:5)
 # testing 2
-num 	= 20
+num 	= 10
 K		= K_[3]
 
 test2 <- function(l) {
 	# generate samples
-	X 	= sapply(1:P, generate_data_II, K, p = 0.001)
+	X 	= sapply(1:P, generate_data_II, K, p = 0)
 	
 	f = eval.statistic(X, K, option = "")
 	return (f)
@@ -25,9 +27,6 @@ z 		= (1:(num*P))/(num*P)
 plot(xx, z, type = "l")
 lines(xx, pf( xx, df1 = (K - 1), df2 = (N*K - K) ), col=3, lwd = 2)
 
-simu_option1 = c("I", "II", "III-p001", "IV-p001")
-simu_option2 = c("III-p002", "III-p005", "III-p01", "III-p02", "III-p05")
-simu_option3 = c("IV-p002", "IV-p005", "IV-p01", "IV-p02", "IV-p05")
 
 # start simulation
 #source("/Users/knight/dev/src/shrinkage_var/simu_shrinkage_t.R")

@@ -5,10 +5,11 @@
 
 # pre-defined variables
 
-num		= 500 # number of simulation
-P		= 2000 # number of genes
+num		= 200 # number of simulation
+P		= 5000 # number of genes
 N		= 3 # sample size
 K_		= c(2, 3, 5, 7) # number of groups
+p_		= c(0, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5) # vector of % outliers
 
 # source dir
 dir.data 	= "/Users/knight/dev/data/shrinkage.ANOVA"
@@ -77,4 +78,10 @@ simu <- function() {
 
 }
 
-#XD = sapply(1:1, test)
+#optionI		= list(	simuart1 = "generate_data_I", simuart2 = "generate_data_I",
+#					sigma1 = sigma1, sigma2 = sigma1, p = NA)
+#optionII 	= list(	simuart1 = "generate_data_II", simuart2 = "generate_data_II",
+#					sigma1 = sigma1, sigma2 = sigma1, p = 0.01)
+
+# generate the evaluated data, option I
+#xd	= sapply(1:num, compute_statistic, data.info=optionI)
