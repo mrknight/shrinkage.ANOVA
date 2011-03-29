@@ -50,7 +50,7 @@ compute.lambda <- function(x, x_k_, v_k, v_target) {
 	lambda 	= numerator/denominator
 	lambda 	= min(1, lambda)
 	
-#	v_k_ 	= lambda * v_median + (1 - lambda) * v_k
+#	v_k_ 	= lambda * v_target + (1 - lambda) * v_k
 	return(lambda)
 }
 
@@ -61,32 +61,51 @@ compute.shrink.var	<- function(lambda, v_target, v_k) {
 	return (sv)
 }
 
+# \TODO		bugs?
 #############################################################################
-# \brief	compute t statistic as function of lambda
+# \brief	compute F statistic as function of lambda
 # \param
 #
-# \return	mean and variance of the function t
+# \return	mean and variance of the function F
 #############################################################################
-compute_t <- function(lambda, param) {
-	if (is.na(param$w_k)[1]) {
-		v_k_ 	= calc_shrinkage_var(lambda, param$v_k, param$v_target)
-		t_k		= (param$x_k - param$y_k) / sqrt(2*v_k_/L)		
-	}
-	else {
-		v_k_ 	= calc_shrinkage_var(lambda, param$v_k, param$v_target)
-		w_k_ 	= calc_shrinkage_var(lambda, param$w_k, param$w_target)	
-		t_k		= (param$x_k - param$y_k) / sqrt(v_k_/L + w_k_/L)
-	}
-	a	= sum(t_k)
-	b	= sum(t_k^2)
-	return (list(a=a/N, b=b/(N-1)))
-}
-
-# \brief	
-data.process <- function(X, L) {
+compute.ab <- function(lambda, mean.all, var.all, target.all, K) {
+	# shrinkage variances definition
+	sv.all		= matrix(NA, nrow = K, ncol = P) 
 	
+	# compute all the shrinkage variances with a given lambda	
+	for (i in 1:K) {
+		sv.all[i,] 		= compute.shrink.var(lambda, target.all[i], var.all[i,])
+	}
+	
+	F		= compute.F.score(mean.all, sv.all, K)
+	
+	a	= sum(F)
+	b	= sum(F^2)
+	return (list(a=a/P, b=b/(P-1)))
 }
 
+# \TODO		bugs?
+#############################################################################
+# \brief	compute F statistic as function of lambda for case 3, 5
+# \param
+#
+# \return	mean and variance of the function F
+#############################################################################
+compute.ab2 <- function(lambda, mean.all, var.all, target, K) {
+	
+	# compute all the shrinkage variances with a given lambda	
+	sv		= compute.shrink.var(lambda, target, var.all)
+	# replicate the sv for K groups to compute the F statistics
+	U.sv	= matrix(rep(sv, K), ncol = P, nrow = K, byrow = T)
+	
+	F		= compute.F.score(mean.all, U.sv, K)
+	
+	a	= sum(F)
+	b	= sum(F^2)
+	return (list(a=a/P, b=b/(P-1)))
+}
+
+# \TODO		not finish
 # \brief	compute the score statistic of shrinkage variance from the data
 # \param	X 	: data matrix
 #			cl	: class label vector

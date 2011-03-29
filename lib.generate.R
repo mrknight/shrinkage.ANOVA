@@ -5,7 +5,7 @@
 
 # pre-defined variables
 
-num		= 200 # number of simulation
+num		= 500 # number of simulation
 P		= 5000 # number of genes
 N		= 3 # sample size
 K_		= c(2, 3, 5, 7) # number of groups
@@ -19,6 +19,8 @@ dir.source	= "/Users/knight/dev/src/shrinkage.ANOVA"
 # loading my library
 source(paste(dir.source, "/lib.evaluate.R"		, sep =""))
 source(paste(dir.source, "/lib.shrinkvar.R"		, sep =""))
+source(paste(dir.source, "/lib.output.R"		, sep =""))
+
 
 #require("geoR")
 # generating
